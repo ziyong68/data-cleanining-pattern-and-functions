@@ -1,0 +1,259 @@
+---
+title: "Detecting non alpha character string column and removing leading zeros"
+author: "Brian Li"
+date: "2019/9/1"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+keep_md is set to yes to render a formatted markdown in github view.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Calling libraries
+
+```{r calling libraries, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(randomNames)
+library(dplyr)
+library(stringr)
+library(kableExtra)
+```
+
+We will circle around the usages of muate_at, str_detect and str_replace functions, and discuss how they can be used together to perform data transformation on string columns that contain some number data in some big data databases e.g. Hadoop. 
+
+## Data Creation
+
+The following code chunk will simulate the format and style of data that needs this treatment. It basically has a lot of string columns that contain number data with trailing zeros. However, some of them are meant to be purely alpha characters and remain as string columns. Personal ID (e.g. "P9455837B") and name (e.g. "Betty") are good examples of those.
+
+```{r data creation}
+# Set seed for repeatibility
+set.seed(68614)
+
+# Input the number of rows
+row_num <- 30
+# Input the number of columns
+col_num <- 10
+
+# Create base dataframe by randomly generating some names and ids
+df <- data.frame(name = randomNames(row_num), 
+                 id = paste0(sample(LETTERS,row_num, replace = TRUE), sample(c(1:1000000), row_num), sample(LETTERS,row_num, replace = TRUE)))
+
+# Create abc_table
+abc_table <- replicate(col_num, {
+  
+  # Number of rows with trailing zeros
+  n<-sample(1:row_num,1)
+  
+  # Randomly generate the column
+  col_vec <- c(str_pad(sample(1:10000,n, replace = TRUE), 9, side = "left", pad = "0"),
+               sample(c("", NA, "N", "O", "P", "S"), row_num - n, replace = TRUE)
+               )
+  
+  return(col_vec)
+  
+})
+
+# Above replicate function will replcate the random column generating function for whatever col_num times (with each replication using a different seed)
+
+# Convert matrix to dataframe
+abc_table <- as.data.frame(abc_table)
+
+# Assign colnames to abc_table
+colnames(abc_table) <- paste0("attr_", c(1:ncol(abc_table)))
+
+# Create def_table
+def_table <- replicate(col_num, {
+  
+  # Number of rows with trailing zeros
+  n<-sample(1:row_num,1)
+  
+  # Randomly generate the column
+  col_vec <- c(str_pad(sample(1:10000,n, replace = TRUE), 9, side = "left", pad = "0"),
+               sample(c("", NA, "N", "O", "P", "S"), row_num - n, replace = TRUE)
+               )
+  
+  return(col_vec)
+  
+})
+
+# Convert matrix to dataframe
+def_table <- as.data.frame(def_table)
+
+# Assign column names to def_table
+colnames(def_table) <- paste0("ada_", c(1:ncol(def_table)))
+
+df <- cbind(df,abc_table, def_table)
+
+# Create 2 additional columns that have only character strings and alpha-numeric strings
+df <- df %>% mutate(ix_1 = sample(c("East", "South", "West", "North"), row_num, replace = TRUE),
+                    ix_2 = sample(c("1A2B", "3C4D", "5E6F", "8G9H"), row_num, replace = TRUE))
+
+```
+
+Hover the mouse over the table and scroll up-down and left-right to take a quick glimpse of the simulated data.
+
+```{r kable}
+knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
+```
+
+## Core Process
+First, create a function that removes leading zero strategically. That is if the string contains all 0 digits, I want it to return a single 0, else transform the 0s into empty string.
+
+```{r remove zeros}
+
+# Define a function that trims leading zeros
+lead_zero_trim <- function(x){
+  x_ws_trim <- trimws(as.character(x))
+  ifelse(
+    str_detect(x_ws_trim, "^0+$"), 
+    str_replace(x_ws_trim, "^0+$", "0"), 
+    str_replace(x_ws_trim,"^0+","")
+    )
+}
+
+# Check if the function works
+(test <- c("  0010  ", "   678910  ", "0000000", "    0000000", "0000100000000", "000000.9910"))
+lead_zero_trim(test)
+
+```
+
+Then, mutate at columns that start with attr_ or ada_ by detecting matches using regular expression. 
+
+```{r muate at columns}
+
+# Uses tidyverse functions
+test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_)")),lead_zero_trim)
+
+# See how df looks like now
+knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
+
+```
+
+You can see that strings that are ("", NA, or character only) remain intact as before. The function only transform those with leading zeros.<br>
+
+Now, we would want to convert these digit strings into numeric columns.
+
+```{r conversion to numeric, warning = FALSE}
+
+# Dot . inherits the object after the pipe. i.e. individual column
+# Wrap the result from lead_zer0_trim(.) with as.numeric and turn the process into a temp function by funs()
+test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_)")),funs(as.numeric(lead_zero_trim(.))))
+
+# See how df looks like now
+knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
+
+```
+
+Oops! The as.numeric() turn those strings into NA, which we don't want.<br>
+That means we have to transform those mixed-in chacters (e.g. N, O, P, S) into NA or some meaningful numbers. Then, depending on whether the column contains pure digits, apply as.numeric on them, but skip the ones containing only characters.
+
+```{r check if data is a pure number, warning = FALSE}
+
+# Define another function to check if it contains at least 1 row of proper number
+is.proper.number <- function(x){
+  str_detect(x, "^[0-9]*(\\.[0-9]*)?$")
+}
+
+# Check if it works
+test <- c("1000", "0.1000", "10002", "123.444", "123.")
+is.proper.number(test)
+
+```
+Putting all together.
+```{r 2nd attempt to convert to numeric}
+
+# Combine all these functions into 1 wrangle function
+ig_wrangle <- function(x){
+  x <- lead_zero_trim(x)
+  
+  # Lookups based on data dictionary
+  x <- case_when(x == "N" ~ "1",
+                 x == "O" ~ "99",
+                 x == "P" ~ "999",
+                 x == "S" ~ "9999",
+                 # Turn those blank strings and true NA into NA_character_
+                 # NA_character_ is used to enforce same type of data across entire column
+                 x == "" | x == " " | is.na(x) ~ NA_character_,
+                 # Else Case
+                 TRUE ~ x)
+  
+  # Convert to numeric if there is at least one proper number data in that column
+  if(any(is.proper.number(x))){
+    as.numeric(x)
+  } else {
+    x
+  }
+  
+  return(x)
+}
+
+test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_)")),ig_wrangle)
+
+# See how df looks like now
+knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
+
+
+```
+You can see that ix_1 and ix_2 remain as character string instead of turning into NA. The N, O, P, S are converted to meaningful numbers, with the missing still defined as missing. 
+
+## Creating a holistic function
+```{r function recap}
+
+# Define a function that trims leading zeros
+lead_zero_trim <- function(x){
+  # Pass as.character in case it is a factor
+  x_ws_trim <- trimws(as.character(x))
+  ifelse(
+    str_detect(x_ws_trim, "^0+$"), 
+    str_replace(x_ws_trim, "^0+$", "0"), 
+    str_replace(x_ws_trim,"^0+","")
+    )
+}
+
+# Define another function to check if it contains at least 1 row of proper number
+is.proper.number <- function(x){
+  str_detect(x, "^[0-9]*(\\.[0-9]*)?$")
+}
+
+# Define ig_wrangle function
+ig_wrangle <- function(x){
+  x <- lead_zero_trim(x)
+  
+  # Lookups based on data dictionary
+  x <- case_when(x == "N" ~ "1",
+                 x == "O" ~ "99",
+                 x == "P" ~ "999",
+                 x == "S" ~ "9999",
+                 # Turn those blank strings and true NA into NA_character_
+                 # NA_character_ is used to enforce same type of data across entire column
+                 x == "" | x == " " | is.na(x) ~ NA_character_,
+                 # Else Case
+                 TRUE ~ x)
+  
+  # Convert to numeric if there is at least one proper number data in that column
+  if(any(is.proper.number(x))){
+    as.numeric(x)
+  } else {
+    x
+  }
+  
+  return(x)
+}
+
+# Create a wrapper to pass dataframe and column selection based on regex starts with
+ig_df_wrangle <- function(df, start_with_str){
+
+  df <- df %>% mutate_at(vars(matches(paste("^(",start_with_str,")"))),ig_wrangle)
+  
+}
+
+# Test
+test2 <- ig_df_wrangle(df, "attr_|ada_|ix_")
+# This will apply the ig_wrangle function to columns that starts with attr_, ada_ or ix_
+
+```
+
