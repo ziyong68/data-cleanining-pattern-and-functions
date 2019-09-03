@@ -9419,7 +9419,7 @@ ig_wrangle &lt;- function(x){
 # Create a wrapper to pass dataframe and column selection based on regex starts with
 ig_df_wrangle &lt;- function(df, start_with_str){
 
-  df &lt;- df %&gt;% mutate_at(vars(matches(paste(&quot;^(&quot;,start_with_str,&quot;)&quot;))),ig_wrangle)
+  df &lt;- df %&gt;% mutate_at(vars(matches(paste0(&quot;^(&quot;,start_with_str,&quot;)&quot;))),ig_wrangle)
   
 }
 

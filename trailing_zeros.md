@@ -3509,7 +3509,7 @@ ig_wrangle <- function(x){
 # Create a wrapper to pass dataframe and column selection based on regex starts with
 ig_df_wrangle <- function(df, start_with_str){
 
-  df <- df %>% mutate_at(vars(matches(paste("^(",start_with_str,")"))),ig_wrangle)
+  df <- df %>% mutate_at(vars(matches(paste0("^(",start_with_str,")"))),ig_wrangle)
   
 }
 
