@@ -89,8 +89,14 @@ colnames(def_table) <- paste0("ada_", c(1:ncol(def_table)))
 df <- cbind(df,abc_table, def_table)
 
 # Create 2 additional columns that have only character strings and alpha-numeric strings
-df <- df %>% mutate(ix_1 = sample(c("East", "South", "West", "North"), row_num, replace = TRUE),
-                    ix_2 = sample(c("1A2B", "3C4D", "5E6F", "8G9H"), row_num, replace = TRUE))
+# Create a result indicator
+# Create a NA column to test cor function in lapply
+df <- df %>% mutate(ix_1 = sample(c("East", "South", "West", "North", NA), row_num, replace = TRUE),
+                    ix_2 = sample(c("1A2B", "3C4D", "5E6F", "8G9H", NA), row_num, replace = TRUE),
+                    result_ind = sample(c(0,1,NA), row_num, replace = TRUE),
+                    result_ind_2 = c(rep(NA_real_, 15), rep(1, 15)),
+                    base_column = c(rep(1, 15), rep(NA_real_,15))) %>% 
+  select(name, id, base_column, everything())
 
 ```
 
@@ -126,7 +132,7 @@ Then, mutate at columns that start with attr_ or ada_ by detecting matches using
 ```{r muate at columns}
 
 # Uses tidyverse functions
-test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_)")),lead_zero_trim)
+test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_|result_ind)")),lead_zero_trim)
 
 # See how df looks like now
 knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
@@ -141,7 +147,7 @@ Now, we would want to convert these digit strings into numeric columns.
 
 # Dot . inherits the object after the pipe. i.e. individual column
 # Wrap the result from lead_zer0_trim(.) with as.numeric and turn the process into a temp function by funs()
-test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_)")),funs(as.numeric(lead_zero_trim(.))))
+test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_|result)")),funs(as.numeric(lead_zero_trim(.))))
 
 # See how df looks like now
 knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
@@ -182,10 +188,10 @@ ig_wrangle <- function(x){
                  TRUE ~ x)
   
   # Convert to numeric if there is at least one proper number data in that column
-  if(any(is.proper.number(x))){
-    as.numeric(x)
+  if(any(is.proper.number(x), na.rm = TRUE)){
+    x <- as.numeric(x)
   } else {
-    x
+    x <- x
   }
   
   return(x)
@@ -235,10 +241,10 @@ ig_wrangle <- function(x){
                  TRUE ~ x)
   
   # Convert to numeric if there is at least one proper number data in that column
-  if(any(is.proper.number(x))){
-    as.numeric(x)
+  if(any(is.proper.number(x), na.rm = TRUE)){
+    x <- as.numeric(x)
   } else {
-    x
+    x <- x
   }
   
   return(x)
@@ -252,8 +258,23 @@ ig_df_wrangle <- function(df, start_with_str){
 }
 
 # Test
-test2 <- ig_df_wrangle(df, "attr_|ada_|ix_")
+test2 <- ig_df_wrangle(df, "attr_|ix_")
 # This will apply the ig_wrangle function to columns that starts with attr_, ada_ or ix_
+
+test2_sum <- lapply(test2, function(x){
+  if(is.numeric(x)){
+    correlation = tryCatch({cor(x, test$result_ind, use = "complete.obs")}, error = function(e){-9999})
+    average = mean(x, na.rm = TRUE)
+  } else {
+    correlation = NA
+    average = NA
+  }
+  
+  return(c(correlation = correlation, average = average))
+  
+})
+
+test2_sum <- t(as.data.frame(test2_sum))
 
 ```
 
