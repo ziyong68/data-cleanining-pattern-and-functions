@@ -89,8 +89,14 @@ colnames(def_table) <- paste0("ada_", c(1:ncol(def_table)))
 df <- cbind(df,abc_table, def_table)
 
 # Create 2 additional columns that have only character strings and alpha-numeric strings
-df <- df %>% mutate(ix_1 = sample(c("East", "South", "West", "North"), row_num, replace = TRUE),
-                    ix_2 = sample(c("1A2B", "3C4D", "5E6F", "8G9H"), row_num, replace = TRUE))
+# Create a result indicator
+# Create a NA column to test cor function in lapply
+df <- df %>% mutate(ix_1 = sample(c("East", "South", "West", "North", NA), row_num, replace = TRUE),
+                    ix_2 = sample(c("1A2B", "3C4D", "5E6F", "8G9H", NA), row_num, replace = TRUE),
+                    result_ind = sample(c(0,1,NA), row_num, replace = TRUE),
+                    result_ind_2 = c(rep(NA_real_, 15), rep(1, 15)),
+                    base_column = c(rep(1, 15), rep(NA_real_,15))) %>% 
+  select(name, id, base_column, everything())
 ```
 
 Hover the mouse over the table and scroll up-down and left-right to take a quick glimpse of the simulated data.
@@ -105,6 +111,7 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> name </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> id </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> base_column </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_1 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_2 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_3 </th>
@@ -127,12 +134,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_10 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ix_1 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ix_2 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> result_ind </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> result_ind_2 </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> Her, Abhinav </td>
    <td style="text-align:left;"> J959807F </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000003371 </td>
    <td style="text-align:left;"> 000003613 </td>
    <td style="text-align:left;"> 000006093 </td>
@@ -154,11 +164,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000009787 </td>
    <td style="text-align:left;"> 000006766 </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dews, Shayna </td>
    <td style="text-align:left;"> G234300N </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000005610 </td>
    <td style="text-align:left;"> 000003265 </td>
    <td style="text-align:left;"> 000006756 </td>
@@ -181,10 +194,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000005902 </td>
    <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Kiefer, Tasia </td>
    <td style="text-align:left;"> B803488K </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000002973 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 000002878 </td>
@@ -206,11 +222,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000008821 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Watchman, Andrew </td>
    <td style="text-align:left;"> O787540P </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000009621 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 000001979 </td>
@@ -231,12 +250,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 000004018 </td>
    <td style="text-align:left;"> S </td>
-   <td style="text-align:left;"> South </td>
+   <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Massara, Abigail </td>
    <td style="text-align:left;"> T486795I </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000008575 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 000005560 </td>
@@ -259,10 +281,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Tran, Thomas </td>
    <td style="text-align:left;"> E410468Z </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000003963 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 000005599 </td>
@@ -285,10 +310,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Waheed, Rumaana </td>
    <td style="text-align:left;"> Y655483R </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000004906 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 000001123 </td>
@@ -310,11 +338,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000003928 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Bailey, Corie </td>
    <td style="text-align:left;"> C510608T </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000000026 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> 000006947 </td>
@@ -335,12 +366,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 000003835 </td>
    <td style="text-align:left;"> P </td>
-   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mata-Lovato, Alexi </td>
    <td style="text-align:left;"> D749327B </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000000117 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 000004626 </td>
@@ -361,12 +395,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 000002159 </td>
    <td style="text-align:left;"> S </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Farrah, Jam,Aan </td>
    <td style="text-align:left;"> W704185D </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000009081 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 000003943 </td>
@@ -387,12 +424,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 000006288 </td>
    <td style="text-align:left;"> S </td>
-   <td style="text-align:left;"> West </td>
+   <td style="text-align:left;"> North </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Madrill, Arnulfo </td>
    <td style="text-align:left;"> R102458G </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000004502 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 000004634 </td>
@@ -414,11 +454,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000006398 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Schmalz, Alyssa </td>
    <td style="text-align:left;"> C305005Z </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000003565 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 000008802 </td>
@@ -441,10 +484,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hickam, Judson </td>
    <td style="text-align:left;"> X93080P </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000003344 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> 000000854 </td>
@@ -465,12 +511,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 000001985 </td>
    <td style="text-align:left;"> P </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Garland, Lenah </td>
    <td style="text-align:left;"> E758891B </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000008275 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 000005183 </td>
@@ -492,11 +541,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000004124 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Burki, Dhaki </td>
    <td style="text-align:left;"> L978826F </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 000004289 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> 000003696 </td>
@@ -518,11 +570,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000003910 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Riddick, Alexander </td>
    <td style="text-align:left;"> Y141885L </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 000008807 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 000001984 </td>
@@ -544,11 +599,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> 000009571 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Quach, Kanchana </td>
    <td style="text-align:left;"> L762764J </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 000006552 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 000005768 </td>
@@ -571,10 +629,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Edwards, Jordan </td>
    <td style="text-align:left;"> L822113R </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 000003309 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 000001606 </td>
@@ -597,10 +658,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Le, Cordelia </td>
    <td style="text-align:left;"> W169026C </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 000003478 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 000004319 </td>
@@ -622,11 +686,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Corning, Roget </td>
    <td style="text-align:left;"> F169524C </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 000008610 </td>
@@ -648,11 +715,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis, Sachae </td>
    <td style="text-align:left;"> F833563K </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 000000886 </td>
@@ -675,10 +745,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Casalaina, Taylor </td>
    <td style="text-align:left;"> N747000P </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 000002128 </td>
@@ -700,11 +773,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Wisham, Hannah </td>
    <td style="text-align:left;"> E829622B </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> O </td>
@@ -726,11 +802,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Sandoval Romero, Cesar </td>
    <td style="text-align:left;"> B122528U </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;">  </td>
@@ -752,11 +831,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;">  </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mo, Tyler </td>
    <td style="text-align:left;"> B409818K </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> NA </td>
@@ -778,11 +860,14 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Renfroe, Noah </td>
    <td style="text-align:left;"> W545437Y </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
@@ -803,12 +888,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
-   <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis III, Rajon </td>
    <td style="text-align:left;"> A755450T </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> O </td>
@@ -829,12 +917,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> East </td>
+   <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Johnson, Daijanae </td>
    <td style="text-align:left;"> H641867H </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;">  </td>
@@ -855,12 +946,15 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> O </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lindsey, Don </td>
    <td style="text-align:left;"> K850252Q </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> NA </td>
@@ -883,10 +977,13 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Iu, Aaron </td>
    <td style="text-align:left;"> P930968J </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;">  </td>
@@ -909,6 +1006,8 @@ knitr::kable(df) %>% kable_styling() %>% scroll_box(width = "100%", height = "60
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
 </tbody>
 </table></div>
@@ -950,7 +1049,7 @@ Then, mutate at columns that start with attr_ or ada_ by detecting matches using
 
 ```r
 # Uses tidyverse functions
-test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_)")),lead_zero_trim)
+test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_|result_ind)")),lead_zero_trim)
 
 # See how df looks like now
 knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
@@ -961,6 +1060,7 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> name </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> id </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> base_column </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_1 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_2 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_3 </th>
@@ -983,12 +1083,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_10 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ix_1 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ix_2 </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> result_ind </th>
+   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> result_ind_2 </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> Her, Abhinav </td>
    <td style="text-align:left;"> J959807F </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 3371 </td>
    <td style="text-align:left;"> 3613 </td>
    <td style="text-align:left;"> 6093 </td>
@@ -1010,11 +1113,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 9787 </td>
    <td style="text-align:left;"> 6766 </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dews, Shayna </td>
    <td style="text-align:left;"> G234300N </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 5610 </td>
    <td style="text-align:left;"> 3265 </td>
    <td style="text-align:left;"> 6756 </td>
@@ -1037,10 +1143,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 5902 </td>
    <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Kiefer, Tasia </td>
    <td style="text-align:left;"> B803488K </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 2973 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 2878 </td>
@@ -1062,11 +1171,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 8821 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Watchman, Andrew </td>
    <td style="text-align:left;"> O787540P </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 9621 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 1979 </td>
@@ -1087,12 +1199,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 4018 </td>
    <td style="text-align:left;"> S </td>
-   <td style="text-align:left;"> South </td>
+   <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Massara, Abigail </td>
    <td style="text-align:left;"> T486795I </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 8575 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 5560 </td>
@@ -1115,10 +1230,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Tran, Thomas </td>
    <td style="text-align:left;"> E410468Z </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 3963 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 5599 </td>
@@ -1141,10 +1259,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Waheed, Rumaana </td>
    <td style="text-align:left;"> Y655483R </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 4906 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 1123 </td>
@@ -1166,11 +1287,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 3928 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Bailey, Corie </td>
    <td style="text-align:left;"> C510608T </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 26 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> 6947 </td>
@@ -1191,12 +1315,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 3835 </td>
    <td style="text-align:left;"> P </td>
-   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mata-Lovato, Alexi </td>
    <td style="text-align:left;"> D749327B </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 117 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 4626 </td>
@@ -1217,12 +1344,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 2159 </td>
    <td style="text-align:left;"> S </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Farrah, Jam,Aan </td>
    <td style="text-align:left;"> W704185D </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 9081 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 3943 </td>
@@ -1243,12 +1373,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 6288 </td>
    <td style="text-align:left;"> S </td>
-   <td style="text-align:left;"> West </td>
+   <td style="text-align:left;"> North </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Madrill, Arnulfo </td>
    <td style="text-align:left;"> R102458G </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 4502 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 4634 </td>
@@ -1270,11 +1403,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 6398 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Schmalz, Alyssa </td>
    <td style="text-align:left;"> C305005Z </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 3565 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 8802 </td>
@@ -1297,10 +1433,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hickam, Judson </td>
    <td style="text-align:left;"> X93080P </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 3344 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> 854 </td>
@@ -1321,12 +1460,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 1985 </td>
    <td style="text-align:left;"> P </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Garland, Lenah </td>
    <td style="text-align:left;"> E758891B </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 8275 </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 5183 </td>
@@ -1348,11 +1490,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 4124 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Burki, Dhaki </td>
    <td style="text-align:left;"> L978826F </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> 4289 </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> 3696 </td>
@@ -1374,11 +1519,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 3910 </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Riddick, Alexander </td>
    <td style="text-align:left;"> Y141885L </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 8807 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 1984 </td>
@@ -1400,11 +1548,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> 9571 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Quach, Kanchana </td>
    <td style="text-align:left;"> L762764J </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 6552 </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 5768 </td>
@@ -1427,10 +1578,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Edwards, Jordan </td>
    <td style="text-align:left;"> L822113R </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 3309 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> 1606 </td>
@@ -1453,10 +1607,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Le, Cordelia </td>
    <td style="text-align:left;"> W169026C </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> 3478 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> 4319 </td>
@@ -1478,11 +1635,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Corning, Roget </td>
    <td style="text-align:left;"> F169524C </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> 8610 </td>
@@ -1504,11 +1664,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis, Sachae </td>
    <td style="text-align:left;"> F833563K </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> 886 </td>
@@ -1531,10 +1694,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Casalaina, Taylor </td>
    <td style="text-align:left;"> N747000P </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> 2128 </td>
@@ -1556,11 +1722,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Wisham, Hannah </td>
    <td style="text-align:left;"> E829622B </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> O </td>
@@ -1582,11 +1751,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Sandoval Romero, Cesar </td>
    <td style="text-align:left;"> B122528U </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;">  </td>
@@ -1608,11 +1780,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;">  </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mo, Tyler </td>
    <td style="text-align:left;"> B409818K </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> NA </td>
@@ -1634,11 +1809,14 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Renfroe, Noah </td>
    <td style="text-align:left;"> W545437Y </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
@@ -1659,12 +1837,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
-   <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis III, Rajon </td>
    <td style="text-align:left;"> A755450T </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> N </td>
    <td style="text-align:left;"> O </td>
@@ -1685,12 +1866,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;">  </td>
-   <td style="text-align:left;"> East </td>
+   <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Johnson, Daijanae </td>
    <td style="text-align:left;"> H641867H </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;">  </td>
@@ -1711,12 +1895,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;"> P </td>
    <td style="text-align:left;"> O </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lindsey, Don </td>
    <td style="text-align:left;"> K850252Q </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> S </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> NA </td>
@@ -1739,10 +1926,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Iu, Aaron </td>
    <td style="text-align:left;"> P930968J </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> O </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:left;">  </td>
@@ -1765,6 +1955,8 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:left;">  </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 1 </td>
   </tr>
 </tbody>
 </table></div>
@@ -1777,7 +1969,7 @@ Now, we would want to convert these digit strings into numeric columns.
 ```r
 # Dot . inherits the object after the pipe. i.e. individual column
 # Wrap the result from lead_zer0_trim(.) with as.numeric and turn the process into a temp function by funs()
-test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_)")),funs(as.numeric(lead_zero_trim(.))))
+test <- df %>% mutate_at(vars(matches("^(attr_|ada_|ix_|result)")),funs(as.numeric(lead_zero_trim(.))))
 
 # See how df looks like now
 knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "600px")
@@ -1788,6 +1980,7 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> name </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> id </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> base_column </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_1 </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_2 </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_3 </th>
@@ -1810,12 +2003,15 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_10 </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ix_1 </th>
    <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ix_2 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> result_ind </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> result_ind_2 </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> Her, Abhinav </td>
    <td style="text-align:left;"> J959807F </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 3371 </td>
    <td style="text-align:right;"> 3613 </td>
    <td style="text-align:right;"> 6093 </td>
@@ -1838,10 +2034,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> 6766 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dews, Shayna </td>
    <td style="text-align:left;"> G234300N </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 5610 </td>
    <td style="text-align:right;"> 3265 </td>
    <td style="text-align:right;"> 6756 </td>
@@ -1864,10 +2063,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> 5902 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Kiefer, Tasia </td>
    <td style="text-align:left;"> B803488K </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2973 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 2878 </td>
@@ -1890,10 +2092,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Watchman, Andrew </td>
    <td style="text-align:left;"> O787540P </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 9621 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 1979 </td>
@@ -1916,10 +2121,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Massara, Abigail </td>
    <td style="text-align:left;"> T486795I </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 8575 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 5560 </td>
@@ -1942,10 +2150,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Tran, Thomas </td>
    <td style="text-align:left;"> E410468Z </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 3963 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 5599 </td>
@@ -1968,10 +2179,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Waheed, Rumaana </td>
    <td style="text-align:left;"> Y655483R </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 4906 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 1123 </td>
@@ -1994,10 +2208,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Bailey, Corie </td>
    <td style="text-align:left;"> C510608T </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 26 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 6947 </td>
@@ -2020,10 +2237,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mata-Lovato, Alexi </td>
    <td style="text-align:left;"> D749327B </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 117 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 4626 </td>
@@ -2046,10 +2266,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Farrah, Jam,Aan </td>
    <td style="text-align:left;"> W704185D </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 9081 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 3943 </td>
@@ -2072,10 +2295,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Madrill, Arnulfo </td>
    <td style="text-align:left;"> R102458G </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 4502 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 4634 </td>
@@ -2098,10 +2324,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Schmalz, Alyssa </td>
    <td style="text-align:left;"> C305005Z </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 3565 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 8802 </td>
@@ -2124,10 +2353,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hickam, Judson </td>
    <td style="text-align:left;"> X93080P </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 3344 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 854 </td>
@@ -2150,10 +2382,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Garland, Lenah </td>
    <td style="text-align:left;"> E758891B </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 8275 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 5183 </td>
@@ -2176,10 +2411,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Burki, Dhaki </td>
    <td style="text-align:left;"> L978826F </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 4289 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 3696 </td>
@@ -2202,10 +2440,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Riddick, Alexander </td>
    <td style="text-align:left;"> Y141885L </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 8807 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 1984 </td>
@@ -2228,10 +2469,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Quach, Kanchana </td>
    <td style="text-align:left;"> L762764J </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 6552 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 5768 </td>
@@ -2254,10 +2498,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Edwards, Jordan </td>
    <td style="text-align:left;"> L822113R </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 3309 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 1606 </td>
@@ -2280,10 +2527,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Le, Cordelia </td>
    <td style="text-align:left;"> W169026C </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 3478 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 4319 </td>
@@ -2306,10 +2556,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Corning, Roget </td>
    <td style="text-align:left;"> F169524C </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 8610 </td>
@@ -2332,10 +2585,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis, Sachae </td>
    <td style="text-align:left;"> F833563K </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 886 </td>
@@ -2358,10 +2614,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Casalaina, Taylor </td>
    <td style="text-align:left;"> N747000P </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> 2128 </td>
@@ -2384,10 +2643,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Wisham, Hannah </td>
    <td style="text-align:left;"> E829622B </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -2410,10 +2672,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Sandoval Romero, Cesar </td>
    <td style="text-align:left;"> B122528U </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -2436,10 +2701,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mo, Tyler </td>
    <td style="text-align:left;"> B409818K </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -2462,10 +2730,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Renfroe, Noah </td>
    <td style="text-align:left;"> W545437Y </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -2488,10 +2759,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis III, Rajon </td>
    <td style="text-align:left;"> A755450T </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -2514,10 +2788,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Johnson, Daijanae </td>
    <td style="text-align:left;"> H641867H </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -2540,10 +2817,13 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lindsey, Don </td>
    <td style="text-align:left;"> K850252Q </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -2566,6 +2846,8 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Iu, Aaron </td>
@@ -2592,6 +2874,9 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
 </tbody>
 </table></div>
@@ -2633,10 +2918,10 @@ ig_wrangle <- function(x){
                  TRUE ~ x)
   
   # Convert to numeric if there is at least one proper number data in that column
-  if(any(is.proper.number(x))){
-    as.numeric(x)
+  if(any(is.proper.number(x), na.rm = TRUE)){
+    x <- as.numeric(x)
   } else {
-    x
+    x <- x
   }
   
   return(x)
@@ -2653,810 +2938,903 @@ knitr::kable(test) %>% kable_styling() %>% scroll_box(width = "100%", height = "
   <tr>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> name </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> id </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_1 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_2 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_3 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_4 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_5 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_6 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_7 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_8 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_9 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> attr_10 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_1 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_2 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_3 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_4 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_5 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_6 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_7 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_8 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_9 </th>
-   <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ada_10 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> base_column </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_1 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_2 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_3 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_4 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_5 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_6 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_7 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_8 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_9 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> attr_10 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_1 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_2 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_3 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_4 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_5 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_6 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_7 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_8 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_9 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> ada_10 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ix_1 </th>
    <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;"> ix_2 </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> result_ind </th>
+   <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;"> result_ind_2 </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> Her, Abhinav </td>
    <td style="text-align:left;"> J959807F </td>
-   <td style="text-align:left;"> 3371 </td>
-   <td style="text-align:left;"> 3613 </td>
-   <td style="text-align:left;"> 6093 </td>
-   <td style="text-align:left;"> 3411 </td>
-   <td style="text-align:left;"> 2180 </td>
-   <td style="text-align:left;"> 7845 </td>
-   <td style="text-align:left;"> 6874 </td>
-   <td style="text-align:left;"> 8435 </td>
-   <td style="text-align:left;"> 1467 </td>
-   <td style="text-align:left;"> 5090 </td>
-   <td style="text-align:left;"> 3554 </td>
-   <td style="text-align:left;"> 7767 </td>
-   <td style="text-align:left;"> 2779 </td>
-   <td style="text-align:left;"> 6235 </td>
-   <td style="text-align:left;"> 7309 </td>
-   <td style="text-align:left;"> 7685 </td>
-   <td style="text-align:left;"> 9916 </td>
-   <td style="text-align:left;"> 6296 </td>
-   <td style="text-align:left;"> 9787 </td>
-   <td style="text-align:left;"> 6766 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3371 </td>
+   <td style="text-align:right;"> 3613 </td>
+   <td style="text-align:right;"> 6093 </td>
+   <td style="text-align:right;"> 3411 </td>
+   <td style="text-align:right;"> 2180 </td>
+   <td style="text-align:right;"> 7845 </td>
+   <td style="text-align:right;"> 6874 </td>
+   <td style="text-align:right;"> 8435 </td>
+   <td style="text-align:right;"> 1467 </td>
+   <td style="text-align:right;"> 5090 </td>
+   <td style="text-align:right;"> 3554 </td>
+   <td style="text-align:right;"> 7767 </td>
+   <td style="text-align:right;"> 2779 </td>
+   <td style="text-align:right;"> 6235 </td>
+   <td style="text-align:right;"> 7309 </td>
+   <td style="text-align:right;"> 7685 </td>
+   <td style="text-align:right;"> 9916 </td>
+   <td style="text-align:right;"> 6296 </td>
+   <td style="text-align:right;"> 9787 </td>
+   <td style="text-align:right;"> 6766 </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Dews, Shayna </td>
    <td style="text-align:left;"> G234300N </td>
-   <td style="text-align:left;"> 5610 </td>
-   <td style="text-align:left;"> 3265 </td>
-   <td style="text-align:left;"> 6756 </td>
-   <td style="text-align:left;"> 6307 </td>
-   <td style="text-align:left;"> 8466 </td>
-   <td style="text-align:left;"> 2395 </td>
-   <td style="text-align:left;"> 285 </td>
-   <td style="text-align:left;"> 4480 </td>
-   <td style="text-align:left;"> 6644 </td>
-   <td style="text-align:left;"> 9457 </td>
-   <td style="text-align:left;"> 8418 </td>
-   <td style="text-align:left;"> 8782 </td>
-   <td style="text-align:left;"> 5735 </td>
-   <td style="text-align:left;"> 6464 </td>
-   <td style="text-align:left;"> 5551 </td>
-   <td style="text-align:left;"> 5849 </td>
-   <td style="text-align:left;"> 7345 </td>
-   <td style="text-align:left;"> 4872 </td>
-   <td style="text-align:left;"> 9102 </td>
-   <td style="text-align:left;"> 5902 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 5610 </td>
+   <td style="text-align:right;"> 3265 </td>
+   <td style="text-align:right;"> 6756 </td>
+   <td style="text-align:right;"> 6307 </td>
+   <td style="text-align:right;"> 8466 </td>
+   <td style="text-align:right;"> 2395 </td>
+   <td style="text-align:right;"> 285 </td>
+   <td style="text-align:right;"> 4480 </td>
+   <td style="text-align:right;"> 6644 </td>
+   <td style="text-align:right;"> 9457 </td>
+   <td style="text-align:right;"> 8418 </td>
+   <td style="text-align:right;"> 8782 </td>
+   <td style="text-align:right;"> 5735 </td>
+   <td style="text-align:right;"> 6464 </td>
+   <td style="text-align:right;"> 5551 </td>
+   <td style="text-align:right;"> 5849 </td>
+   <td style="text-align:right;"> 7345 </td>
+   <td style="text-align:right;"> 4872 </td>
+   <td style="text-align:right;"> 9102 </td>
+   <td style="text-align:right;"> 5902 </td>
    <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Kiefer, Tasia </td>
    <td style="text-align:left;"> B803488K </td>
-   <td style="text-align:left;"> 2973 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 2878 </td>
-   <td style="text-align:left;"> 7659 </td>
-   <td style="text-align:left;"> 2812 </td>
-   <td style="text-align:left;"> 3928 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 7907 </td>
-   <td style="text-align:left;"> 3931 </td>
-   <td style="text-align:left;"> 1124 </td>
-   <td style="text-align:left;"> 7705 </td>
-   <td style="text-align:left;"> 2425 </td>
-   <td style="text-align:left;"> 464 </td>
-   <td style="text-align:left;"> 8656 </td>
-   <td style="text-align:left;"> 6109 </td>
-   <td style="text-align:left;"> 3763 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 8821 </td>
-   <td style="text-align:left;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 2973 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 2878 </td>
+   <td style="text-align:right;"> 7659 </td>
+   <td style="text-align:right;"> 2812 </td>
+   <td style="text-align:right;"> 3928 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 7907 </td>
+   <td style="text-align:right;"> 3931 </td>
+   <td style="text-align:right;"> 1124 </td>
+   <td style="text-align:right;"> 7705 </td>
+   <td style="text-align:right;"> 2425 </td>
+   <td style="text-align:right;"> 464 </td>
+   <td style="text-align:right;"> 8656 </td>
+   <td style="text-align:right;"> 6109 </td>
+   <td style="text-align:right;"> 3763 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 8821 </td>
+   <td style="text-align:right;"> 99 </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Watchman, Andrew </td>
    <td style="text-align:left;"> O787540P </td>
-   <td style="text-align:left;"> 9621 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1979 </td>
-   <td style="text-align:left;"> 9455 </td>
-   <td style="text-align:left;"> 3813 </td>
-   <td style="text-align:left;"> 6375 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 686 </td>
-   <td style="text-align:left;"> 2134 </td>
-   <td style="text-align:left;"> 7035 </td>
-   <td style="text-align:left;"> 9627 </td>
-   <td style="text-align:left;"> 560 </td>
-   <td style="text-align:left;"> 6997 </td>
-   <td style="text-align:left;"> 3332 </td>
-   <td style="text-align:left;"> 8448 </td>
-   <td style="text-align:left;"> 638 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 4018 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> South </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9621 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1979 </td>
+   <td style="text-align:right;"> 9455 </td>
+   <td style="text-align:right;"> 3813 </td>
+   <td style="text-align:right;"> 6375 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 686 </td>
+   <td style="text-align:right;"> 2134 </td>
+   <td style="text-align:right;"> 7035 </td>
+   <td style="text-align:right;"> 9627 </td>
+   <td style="text-align:right;"> 560 </td>
+   <td style="text-align:right;"> 6997 </td>
+   <td style="text-align:right;"> 3332 </td>
+   <td style="text-align:right;"> 8448 </td>
+   <td style="text-align:right;"> 638 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 4018 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Massara, Abigail </td>
    <td style="text-align:left;"> T486795I </td>
-   <td style="text-align:left;"> 8575 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 5560 </td>
-   <td style="text-align:left;"> 4280 </td>
-   <td style="text-align:left;"> 9219 </td>
-   <td style="text-align:left;"> 1598 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1970 </td>
-   <td style="text-align:left;"> 3871 </td>
-   <td style="text-align:left;"> 1056 </td>
-   <td style="text-align:left;"> 9648 </td>
-   <td style="text-align:left;"> 722 </td>
-   <td style="text-align:left;"> 6797 </td>
-   <td style="text-align:left;"> 5078 </td>
-   <td style="text-align:left;"> 4767 </td>
-   <td style="text-align:left;"> 9904 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 5505 </td>
-   <td style="text-align:left;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 8575 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 5560 </td>
+   <td style="text-align:right;"> 4280 </td>
+   <td style="text-align:right;"> 9219 </td>
+   <td style="text-align:right;"> 1598 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1970 </td>
+   <td style="text-align:right;"> 3871 </td>
+   <td style="text-align:right;"> 1056 </td>
+   <td style="text-align:right;"> 9648 </td>
+   <td style="text-align:right;"> 722 </td>
+   <td style="text-align:right;"> 6797 </td>
+   <td style="text-align:right;"> 5078 </td>
+   <td style="text-align:right;"> 4767 </td>
+   <td style="text-align:right;"> 9904 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 5505 </td>
+   <td style="text-align:right;"> 99 </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Tran, Thomas </td>
    <td style="text-align:left;"> E410468Z </td>
-   <td style="text-align:left;"> 3963 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 5599 </td>
-   <td style="text-align:left;"> 6215 </td>
-   <td style="text-align:left;"> 2304 </td>
-   <td style="text-align:left;"> 5753 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 462 </td>
-   <td style="text-align:left;"> 1652 </td>
-   <td style="text-align:left;"> 5469 </td>
-   <td style="text-align:left;"> 2389 </td>
-   <td style="text-align:left;"> 502 </td>
-   <td style="text-align:left;"> 6301 </td>
-   <td style="text-align:left;"> 4732 </td>
-   <td style="text-align:left;"> 5718 </td>
-   <td style="text-align:left;"> 6752 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 346 </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3963 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 5599 </td>
+   <td style="text-align:right;"> 6215 </td>
+   <td style="text-align:right;"> 2304 </td>
+   <td style="text-align:right;"> 5753 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 462 </td>
+   <td style="text-align:right;"> 1652 </td>
+   <td style="text-align:right;"> 5469 </td>
+   <td style="text-align:right;"> 2389 </td>
+   <td style="text-align:right;"> 502 </td>
+   <td style="text-align:right;"> 6301 </td>
+   <td style="text-align:right;"> 4732 </td>
+   <td style="text-align:right;"> 5718 </td>
+   <td style="text-align:right;"> 6752 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 346 </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Waheed, Rumaana </td>
    <td style="text-align:left;"> Y655483R </td>
-   <td style="text-align:left;"> 4906 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1123 </td>
-   <td style="text-align:left;"> 2767 </td>
-   <td style="text-align:left;"> 6481 </td>
-   <td style="text-align:left;"> 635 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 432 </td>
-   <td style="text-align:left;"> 5707 </td>
-   <td style="text-align:left;"> 4158 </td>
-   <td style="text-align:left;"> 2906 </td>
-   <td style="text-align:left;"> 3909 </td>
-   <td style="text-align:left;"> 1348 </td>
-   <td style="text-align:left;"> 4057 </td>
-   <td style="text-align:left;"> 1828 </td>
-   <td style="text-align:left;"> 5003 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 3928 </td>
-   <td style="text-align:left;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 4906 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1123 </td>
+   <td style="text-align:right;"> 2767 </td>
+   <td style="text-align:right;"> 6481 </td>
+   <td style="text-align:right;"> 635 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 432 </td>
+   <td style="text-align:right;"> 5707 </td>
+   <td style="text-align:right;"> 4158 </td>
+   <td style="text-align:right;"> 2906 </td>
+   <td style="text-align:right;"> 3909 </td>
+   <td style="text-align:right;"> 1348 </td>
+   <td style="text-align:right;"> 4057 </td>
+   <td style="text-align:right;"> 1828 </td>
+   <td style="text-align:right;"> 5003 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 3928 </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Bailey, Corie </td>
    <td style="text-align:left;"> C510608T </td>
-   <td style="text-align:left;"> 26 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 6947 </td>
-   <td style="text-align:left;"> 7788 </td>
-   <td style="text-align:left;"> 2508 </td>
-   <td style="text-align:left;"> 5837 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 26 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 6947 </td>
+   <td style="text-align:right;"> 7788 </td>
+   <td style="text-align:right;"> 2508 </td>
+   <td style="text-align:right;"> 5837 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 2565 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1710 </td>
+   <td style="text-align:right;"> 9759 </td>
+   <td style="text-align:right;"> 3227 </td>
+   <td style="text-align:right;"> 273 </td>
+   <td style="text-align:right;"> 4359 </td>
+   <td style="text-align:right;"> 2107 </td>
+   <td style="text-align:right;"> 5865 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 3835 </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 2565 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1710 </td>
-   <td style="text-align:left;"> 9759 </td>
-   <td style="text-align:left;"> 3227 </td>
-   <td style="text-align:left;"> 273 </td>
-   <td style="text-align:left;"> 4359 </td>
-   <td style="text-align:left;"> 2107 </td>
-   <td style="text-align:left;"> 5865 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 3835 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> North </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mata-Lovato, Alexi </td>
    <td style="text-align:left;"> D749327B </td>
-   <td style="text-align:left;"> 117 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 4626 </td>
-   <td style="text-align:left;"> 3618 </td>
-   <td style="text-align:left;"> 5087 </td>
-   <td style="text-align:left;"> 3105 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 3599 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 5728 </td>
-   <td style="text-align:left;"> 1522 </td>
-   <td style="text-align:left;"> 7715 </td>
-   <td style="text-align:left;"> 5157 </td>
-   <td style="text-align:left;"> 8652 </td>
-   <td style="text-align:left;"> 3860 </td>
-   <td style="text-align:left;"> 9515 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 2159 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 117 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 4626 </td>
+   <td style="text-align:right;"> 3618 </td>
+   <td style="text-align:right;"> 5087 </td>
+   <td style="text-align:right;"> 3105 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3599 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 5728 </td>
+   <td style="text-align:right;"> 1522 </td>
+   <td style="text-align:right;"> 7715 </td>
+   <td style="text-align:right;"> 5157 </td>
+   <td style="text-align:right;"> 8652 </td>
+   <td style="text-align:right;"> 3860 </td>
+   <td style="text-align:right;"> 9515 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 2159 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:left;"> North </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Farrah, Jam,Aan </td>
    <td style="text-align:left;"> W704185D </td>
-   <td style="text-align:left;"> 9081 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 3943 </td>
-   <td style="text-align:left;"> 7263 </td>
-   <td style="text-align:left;"> 9296 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 4174 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 8355 </td>
-   <td style="text-align:left;"> 1680 </td>
-   <td style="text-align:left;"> 111 </td>
-   <td style="text-align:left;"> 5638 </td>
-   <td style="text-align:left;"> 3674 </td>
-   <td style="text-align:left;"> 4643 </td>
-   <td style="text-align:left;"> 1581 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 6288 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> West </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9081 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 3943 </td>
+   <td style="text-align:right;"> 7263 </td>
+   <td style="text-align:right;"> 9296 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 4174 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 8355 </td>
+   <td style="text-align:right;"> 1680 </td>
+   <td style="text-align:right;"> 111 </td>
+   <td style="text-align:right;"> 5638 </td>
+   <td style="text-align:right;"> 3674 </td>
+   <td style="text-align:right;"> 4643 </td>
+   <td style="text-align:right;"> 1581 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 6288 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:left;"> North </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Madrill, Arnulfo </td>
    <td style="text-align:left;"> R102458G </td>
-   <td style="text-align:left;"> 4502 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 4634 </td>
-   <td style="text-align:left;"> 5529 </td>
-   <td style="text-align:left;"> 9561 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 3118 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 2498 </td>
-   <td style="text-align:left;"> 2800 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 9035 </td>
-   <td style="text-align:left;"> 3508 </td>
-   <td style="text-align:left;"> 5438 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 6398 </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 4502 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 4634 </td>
+   <td style="text-align:right;"> 5529 </td>
+   <td style="text-align:right;"> 9561 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 3118 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 2498 </td>
+   <td style="text-align:right;"> 2800 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 9035 </td>
+   <td style="text-align:right;"> 3508 </td>
+   <td style="text-align:right;"> 5438 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 6398 </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Schmalz, Alyssa </td>
    <td style="text-align:left;"> C305005Z </td>
-   <td style="text-align:left;"> 3565 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 8802 </td>
-   <td style="text-align:left;"> 9178 </td>
-   <td style="text-align:left;"> 3406 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 109 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 3986 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 2916 </td>
-   <td style="text-align:left;"> 5394 </td>
-   <td style="text-align:left;"> 7192 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 8915 </td>
-   <td style="text-align:left;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3565 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 8802 </td>
+   <td style="text-align:right;"> 9178 </td>
+   <td style="text-align:right;"> 3406 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 109 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 3986 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 2916 </td>
+   <td style="text-align:right;"> 5394 </td>
+   <td style="text-align:right;"> 7192 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 8915 </td>
+   <td style="text-align:right;"> 99 </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hickam, Judson </td>
    <td style="text-align:left;"> X93080P </td>
-   <td style="text-align:left;"> 3344 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 854 </td>
-   <td style="text-align:left;"> 4223 </td>
-   <td style="text-align:left;"> 2952 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3344 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 854 </td>
+   <td style="text-align:right;"> 4223 </td>
+   <td style="text-align:right;"> 2952 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 4623 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3724 </td>
+   <td style="text-align:right;"> 8056 </td>
+   <td style="text-align:right;"> 7007 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1985 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:left;"> North </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 4623 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 3724 </td>
-   <td style="text-align:left;"> 8056 </td>
-   <td style="text-align:left;"> 7007 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1985 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Garland, Lenah </td>
    <td style="text-align:left;"> E758891B </td>
-   <td style="text-align:left;"> 8275 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 5183 </td>
-   <td style="text-align:left;"> 9736 </td>
-   <td style="text-align:left;"> 5371 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 5294 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1161 </td>
-   <td style="text-align:left;"> 4520 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 4124 </td>
-   <td style="text-align:left;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 8275 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 5183 </td>
+   <td style="text-align:right;"> 9736 </td>
+   <td style="text-align:right;"> 5371 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 5294 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1161 </td>
+   <td style="text-align:right;"> 4520 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 4124 </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> al-Burki, Dhaki </td>
    <td style="text-align:left;"> L978826F </td>
-   <td style="text-align:left;"> 4289 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 3696 </td>
-   <td style="text-align:left;"> 2132 </td>
-   <td style="text-align:left;"> 1980 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9282 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 2883 </td>
-   <td style="text-align:left;"> 5529 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 3910 </td>
-   <td style="text-align:left;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 4289 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 3696 </td>
+   <td style="text-align:right;"> 2132 </td>
+   <td style="text-align:right;"> 1980 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9282 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 2883 </td>
+   <td style="text-align:right;"> 5529 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 3910 </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Riddick, Alexander </td>
    <td style="text-align:left;"> Y141885L </td>
-   <td style="text-align:left;"> 8807 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1984 </td>
-   <td style="text-align:left;"> 217 </td>
-   <td style="text-align:left;"> 9293 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1245 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 4594 </td>
-   <td style="text-align:left;"> 1629 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9571 </td>
-   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 8807 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1984 </td>
+   <td style="text-align:right;"> 217 </td>
+   <td style="text-align:right;"> 9293 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1245 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 4594 </td>
+   <td style="text-align:right;"> 1629 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9571 </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Quach, Kanchana </td>
    <td style="text-align:left;"> L762764J </td>
-   <td style="text-align:left;"> 6552 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 5768 </td>
-   <td style="text-align:left;"> 2915 </td>
-   <td style="text-align:left;"> 3118 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 5622 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1518 </td>
-   <td style="text-align:left;"> 2779 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 6552 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 5768 </td>
+   <td style="text-align:right;"> 2915 </td>
+   <td style="text-align:right;"> 3118 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 5622 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1518 </td>
+   <td style="text-align:right;"> 2779 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 9999 </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Edwards, Jordan </td>
    <td style="text-align:left;"> L822113R </td>
-   <td style="text-align:left;"> 3309 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1606 </td>
-   <td style="text-align:left;"> 8578 </td>
-   <td style="text-align:left;"> 7335 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 4720 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 28 </td>
-   <td style="text-align:left;"> 692 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 3309 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1606 </td>
+   <td style="text-align:right;"> 8578 </td>
+   <td style="text-align:right;"> 7335 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 4720 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 28 </td>
+   <td style="text-align:right;"> 692 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9999 </td>
    <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Le, Cordelia </td>
    <td style="text-align:left;"> W169026C </td>
-   <td style="text-align:left;"> 3478 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 4319 </td>
-   <td style="text-align:left;"> 5988 </td>
-   <td style="text-align:left;"> 4487 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 5045 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 2966 </td>
-   <td style="text-align:left;"> 1053 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 3478 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 4319 </td>
+   <td style="text-align:right;"> 5988 </td>
+   <td style="text-align:right;"> 4487 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 5045 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 2966 </td>
+   <td style="text-align:right;"> 1053 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Corning, Roget </td>
    <td style="text-align:left;"> F169524C </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 8610 </td>
-   <td style="text-align:left;"> 9951 </td>
-   <td style="text-align:left;"> 2098 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 4050 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 8032 </td>
-   <td style="text-align:left;"> 8823 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 8610 </td>
+   <td style="text-align:right;"> 9951 </td>
+   <td style="text-align:right;"> 2098 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 4050 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 8032 </td>
+   <td style="text-align:right;"> 8823 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 1 </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis, Sachae </td>
    <td style="text-align:left;"> F833563K </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 886 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 4542 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 3991 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 6326 </td>
-   <td style="text-align:left;"> 1337 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 886 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 4542 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3991 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 6326 </td>
+   <td style="text-align:right;"> 1337 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Casalaina, Taylor </td>
    <td style="text-align:left;"> N747000P </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 2128 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9970 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 373 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 9098 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 2128 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9970 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 373 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 9098 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Wisham, Hannah </td>
    <td style="text-align:left;"> E829622B </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 4089 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 6478 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 6813 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 4089 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 6478 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 6813 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Sandoval Romero, Cesar </td>
    <td style="text-align:left;"> B122528U </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 4250 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 8100 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 7545 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 4250 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 8100 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 7545 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> East </td>
-   <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Mo, Tyler </td>
    <td style="text-align:left;"> B409818K </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 8595 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 5051 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 7380 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 8595 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 5051 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 7380 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> South </td>
-   <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Renfroe, Noah </td>
    <td style="text-align:left;"> W545437Y </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 3979 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 3979 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9035 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9035 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> North </td>
-   <td style="text-align:left;"> 5E6F </td>
+   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lewis III, Rajon </td>
    <td style="text-align:left;"> A755450T </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 3890 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> East </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 3890 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:left;"> South </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Johnson, Daijanae </td>
    <td style="text-align:left;"> H641867H </td>
-   <td style="text-align:left;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 7619 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:left;"> North </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 7619 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> West </td>
-   <td style="text-align:left;"> 8G9H </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Lindsey, Don </td>
    <td style="text-align:left;"> K850252Q </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 2114 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 2114 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> West </td>
    <td style="text-align:left;"> 1A2B </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Iu, Aaron </td>
    <td style="text-align:left;"> P930968J </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 9999 </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> 999 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> 99 </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 9999 </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 999 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:right;"> NA </td>
    <td style="text-align:left;"> East </td>
    <td style="text-align:left;"> 3C4D </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1 </td>
   </tr>
 </tbody>
 </table></div>
@@ -3497,10 +3875,10 @@ ig_wrangle <- function(x){
                  TRUE ~ x)
   
   # Convert to numeric if there is at least one proper number data in that column
-  if(any(is.proper.number(x))){
-    as.numeric(x)
+  if(any(is.proper.number(x), na.rm = TRUE)){
+    x <- as.numeric(x)
   } else {
-    x
+    x <- x
   }
   
   return(x)
@@ -3514,7 +3892,32 @@ ig_df_wrangle <- function(df, start_with_str){
 }
 
 # Test
-test2 <- ig_df_wrangle(df, "attr_|ada_|ix_")
+test2 <- ig_df_wrangle(df, "attr_|ix_")
 # This will apply the ig_wrangle function to columns that starts with attr_, ada_ or ix_
+
+test2_sum <- lapply(test2, function(x){
+  if(is.numeric(x)){
+    correlation = tryCatch({cor(x, test$result_ind, use = "complete.obs")}, error = function(e){-9999})
+    average = mean(x, na.rm = TRUE)
+  } else {
+    correlation = NA
+    average = NA
+  }
+  
+  return(c(correlation = correlation, average = average))
+  
+})
+```
+
+```
+## Warning in cor(x, test$result_ind, use = "complete.obs"): the standard
+## deviation is zero
+
+## Warning in cor(x, test$result_ind, use = "complete.obs"): the standard
+## deviation is zero
+```
+
+```r
+test2_sum <- t(as.data.frame(test2_sum))
 ```
 

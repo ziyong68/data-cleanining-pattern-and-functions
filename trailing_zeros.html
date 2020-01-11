@@ -201,8 +201,14 @@ colnames(def_table) &lt;- paste0(&quot;ada_&quot;, c(1:ncol(def_table)))
 df &lt;- cbind(df,abc_table, def_table)
 
 # Create 2 additional columns that have only character strings and alpha-numeric strings
-df &lt;- df %&gt;% mutate(ix_1 = sample(c(&quot;East&quot;, &quot;South&quot;, &quot;West&quot;, &quot;North&quot;), row_num, replace = TRUE),
-                    ix_2 = sample(c(&quot;1A2B&quot;, &quot;3C4D&quot;, &quot;5E6F&quot;, &quot;8G9H&quot;), row_num, replace = TRUE))</code></pre>
+# Create a result indicator
+# Create a NA column to test cor function in lapply
+df &lt;- df %&gt;% mutate(ix_1 = sample(c(&quot;East&quot;, &quot;South&quot;, &quot;West&quot;, &quot;North&quot;, NA), row_num, replace = TRUE),
+                    ix_2 = sample(c(&quot;1A2B&quot;, &quot;3C4D&quot;, &quot;5E6F&quot;, &quot;8G9H&quot;, NA), row_num, replace = TRUE),
+                    result_ind = sample(c(0,1,NA), row_num, replace = TRUE),
+                    result_ind_2 = c(rep(NA_real_, 15), rep(1, 15)),
+                    base_column = c(rep(1, 15), rep(NA_real_,15))) %&gt;% 
+  select(name, id, base_column, everything())</code></pre>
 <p>Hover the mouse over the table and scroll up-down and left-right to take a quick glimpse of the simulated data.</p>
 <pre class="r"><code>knitr::kable(df) %&gt;% kable_styling() %&gt;% scroll_box(width = &quot;100%&quot;, height = &quot;600px&quot;)</code></pre>
 <div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:600px; overflow-x: scroll; width:100%; ">
@@ -214,6 +220,9 @@ name
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 id
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+base_column
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 attr_1
@@ -281,6 +290,12 @@ ix_1
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 ix_2
 </th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind_2
+</th>
 </tr>
 </thead>
 <tbody>
@@ -290,6 +305,9 @@ Her, Abhinav
 </td>
 <td style="text-align:left;">
 J959807F
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000003371
@@ -355,7 +373,13 @@ J959807F
 North
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -364,6 +388,9 @@ Dews, Shayna
 </td>
 <td style="text-align:left;">
 G234300N
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000005610
@@ -431,6 +458,12 @@ West
 <td style="text-align:left;">
 5E6F
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -438,6 +471,9 @@ Kiefer, Tasia
 </td>
 <td style="text-align:left;">
 B803488K
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000002973
@@ -503,7 +539,13 @@ O
 East
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -512,6 +554,9 @@ Watchman, Andrew
 </td>
 <td style="text-align:left;">
 O787540P
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000009621
@@ -574,10 +619,16 @@ P
 S
 </td>
 <td style="text-align:left;">
-South
+West
 </td>
 <td style="text-align:left;">
 1A2B
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -586,6 +637,9 @@ Massara, Abigail
 </td>
 <td style="text-align:left;">
 T486795I
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000008575
@@ -653,6 +707,12 @@ South
 <td style="text-align:left;">
 5E6F
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -660,6 +720,9 @@ Tran, Thomas
 </td>
 <td style="text-align:left;">
 E410468Z
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000003963
@@ -726,6 +789,12 @@ East
 <td style="text-align:left;">
 3C4D
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -733,6 +802,9 @@ al-Waheed, Rumaana
 </td>
 <td style="text-align:left;">
 Y655483R
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000004906
@@ -798,7 +870,13 @@ P
 South
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -807,6 +885,9 @@ Bailey, Corie
 </td>
 <td style="text-align:left;">
 C510608T
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000000026
@@ -867,10 +948,16 @@ S
 P
 </td>
 <td style="text-align:left;">
-North
+NA
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -879,6 +966,9 @@ Mata-Lovato, Alexi
 </td>
 <td style="text-align:left;">
 D749327B
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000000117
@@ -941,10 +1031,16 @@ S
 S
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -953,6 +1049,9 @@ al-Farrah, Jam,Aan
 </td>
 <td style="text-align:left;">
 W704185D
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000009081
@@ -1015,10 +1114,16 @@ P
 S
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
 5E6F
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -1027,6 +1132,9 @@ Madrill, Arnulfo
 </td>
 <td style="text-align:left;">
 R102458G
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000004502
@@ -1090,7 +1198,13 @@ NA
 East
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -1099,6 +1213,9 @@ Schmalz, Alyssa
 </td>
 <td style="text-align:left;">
 C305005Z
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000003565
@@ -1164,6 +1281,12 @@ South
 <td style="text-align:left;">
 1A2B
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -1171,6 +1294,9 @@ Hickam, Judson
 </td>
 <td style="text-align:left;">
 X93080P
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000003344
@@ -1232,10 +1358,16 @@ NA
 P
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -1244,6 +1376,9 @@ Garland, Lenah
 </td>
 <td style="text-align:left;">
 E758891B
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000008275
@@ -1307,7 +1442,13 @@ P
 North
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -1316,6 +1457,9 @@ al-Burki, Dhaki
 </td>
 <td style="text-align:left;">
 L978826F
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 000004289
@@ -1379,7 +1523,13 @@ P
 East
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -1388,6 +1538,9 @@ Riddick, Alexander
 </td>
 <td style="text-align:left;">
 Y141885L
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 000008807
@@ -1450,7 +1603,13 @@ N
 North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -1459,6 +1618,9 @@ Quach, Kanchana
 </td>
 <td style="text-align:left;">
 L762764J
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 000006552
@@ -1525,6 +1687,12 @@ South
 <td style="text-align:left;">
 3C4D
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -1532,6 +1700,9 @@ Edwards, Jordan
 </td>
 <td style="text-align:left;">
 L822113R
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 000003309
@@ -1596,6 +1767,12 @@ South
 <td style="text-align:left;">
 5E6F
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -1603,6 +1780,9 @@ Le, Cordelia
 </td>
 <td style="text-align:left;">
 W169026C
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 000003478
@@ -1665,7 +1845,13 @@ N
 East
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -1674,6 +1860,9 @@ Corning, Roget
 </td>
 <td style="text-align:left;">
 F169524C
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 </td>
@@ -1736,7 +1925,13 @@ N
 East
 </td>
 <td style="text-align:left;">
-1A2B
+3C4D
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -1745,6 +1940,9 @@ Lewis, Sachae
 </td>
 <td style="text-align:left;">
 F833563K
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -1810,6 +2008,12 @@ East
 <td style="text-align:left;">
 8G9H
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -1817,6 +2021,9 @@ Casalaina, Taylor
 </td>
 <td style="text-align:left;">
 N747000P
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 </td>
@@ -1879,7 +2086,13 @@ O
 South
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -1888,6 +2101,9 @@ Wisham, Hannah
 </td>
 <td style="text-align:left;">
 E829622B
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -1952,7 +2168,13 @@ P
 East
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -1961,6 +2183,9 @@ Sandoval Romero, Cesar
 </td>
 <td style="text-align:left;">
 B122528U
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 P
@@ -2021,7 +2246,13 @@ P
 East
 </td>
 <td style="text-align:left;">
-1A2B
+3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -2030,6 +2261,9 @@ Mo, Tyler
 </td>
 <td style="text-align:left;">
 B409818K
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 N
@@ -2094,7 +2328,13 @@ P
 South
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -2103,6 +2343,9 @@ Renfroe, Noah
 </td>
 <td style="text-align:left;">
 W545437Y
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 P
@@ -2164,10 +2407,16 @@ O
 P
 </td>
 <td style="text-align:left;">
-North
+NA
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -2176,6 +2425,9 @@ Lewis III, Rajon
 </td>
 <td style="text-align:left;">
 A755450T
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -2233,10 +2485,16 @@ P
 <td style="text-align:left;">
 </td>
 <td style="text-align:left;">
-East
+South
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -2245,6 +2503,9 @@ Johnson, Daijanae
 </td>
 <td style="text-align:left;">
 H641867H
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -2303,10 +2564,16 @@ P
 O
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -2315,6 +2582,9 @@ Lindsey, Don
 </td>
 <td style="text-align:left;">
 K850252Q
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 S
@@ -2377,6 +2647,12 @@ West
 <td style="text-align:left;">
 1A2B
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -2384,6 +2660,9 @@ Iu, Aaron
 </td>
 <td style="text-align:left;">
 P930968J
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -2444,6 +2723,12 @@ East
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 </tbody>
@@ -2471,7 +2756,7 @@ lead_zero_trim &lt;- function(x){
 <pre><code>## [1] &quot;10&quot;        &quot;678910&quot;    &quot;0&quot;         &quot;0&quot;         &quot;100000000&quot; &quot;.9910&quot;</code></pre>
 <p>Then, mutate at columns that start with attr_ or ada_ by detecting matches using regular expression.</p>
 <pre class="r"><code># Uses tidyverse functions
-test &lt;- df %&gt;% mutate_at(vars(matches(&quot;^(attr_|ada_|ix_)&quot;)),lead_zero_trim)
+test &lt;- df %&gt;% mutate_at(vars(matches(&quot;^(attr_|ada_|ix_|result_ind)&quot;)),lead_zero_trim)
 
 # See how df looks like now
 knitr::kable(test) %&gt;% kable_styling() %&gt;% scroll_box(width = &quot;100%&quot;, height = &quot;600px&quot;)</code></pre>
@@ -2484,6 +2769,9 @@ name
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 id
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+base_column
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 attr_1
@@ -2551,6 +2839,12 @@ ix_1
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 ix_2
 </th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind_2
+</th>
 </tr>
 </thead>
 <tbody>
@@ -2560,6 +2854,9 @@ Her, Abhinav
 </td>
 <td style="text-align:left;">
 J959807F
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 3371
@@ -2625,7 +2922,13 @@ J959807F
 North
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -2634,6 +2937,9 @@ Dews, Shayna
 </td>
 <td style="text-align:left;">
 G234300N
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 5610
@@ -2701,6 +3007,12 @@ West
 <td style="text-align:left;">
 5E6F
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -2708,6 +3020,9 @@ Kiefer, Tasia
 </td>
 <td style="text-align:left;">
 B803488K
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 2973
@@ -2773,7 +3088,13 @@ O
 East
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -2782,6 +3103,9 @@ Watchman, Andrew
 </td>
 <td style="text-align:left;">
 O787540P
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 9621
@@ -2844,10 +3168,16 @@ P
 S
 </td>
 <td style="text-align:left;">
-South
+West
 </td>
 <td style="text-align:left;">
 1A2B
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -2856,6 +3186,9 @@ Massara, Abigail
 </td>
 <td style="text-align:left;">
 T486795I
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 8575
@@ -2923,6 +3256,12 @@ South
 <td style="text-align:left;">
 5E6F
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -2930,6 +3269,9 @@ Tran, Thomas
 </td>
 <td style="text-align:left;">
 E410468Z
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 3963
@@ -2996,6 +3338,12 @@ East
 <td style="text-align:left;">
 3C4D
 </td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3003,6 +3351,9 @@ al-Waheed, Rumaana
 </td>
 <td style="text-align:left;">
 Y655483R
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 4906
@@ -3068,7 +3419,13 @@ P
 South
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3077,6 +3434,9 @@ Bailey, Corie
 </td>
 <td style="text-align:left;">
 C510608T
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 26
@@ -3137,10 +3497,16 @@ S
 P
 </td>
 <td style="text-align:left;">
-North
+NA
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3149,6 +3515,9 @@ Mata-Lovato, Alexi
 </td>
 <td style="text-align:left;">
 D749327B
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 117
@@ -3211,10 +3580,16 @@ S
 S
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3223,6 +3598,9 @@ al-Farrah, Jam,Aan
 </td>
 <td style="text-align:left;">
 W704185D
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 9081
@@ -3285,10 +3663,16 @@ P
 S
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
 5E6F
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3297,6 +3681,9 @@ Madrill, Arnulfo
 </td>
 <td style="text-align:left;">
 R102458G
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 4502
@@ -3360,7 +3747,13 @@ NA
 East
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3369,6 +3762,9 @@ Schmalz, Alyssa
 </td>
 <td style="text-align:left;">
 C305005Z
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 3565
@@ -3434,6 +3830,12 @@ South
 <td style="text-align:left;">
 1A2B
 </td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3441,6 +3843,9 @@ Hickam, Judson
 </td>
 <td style="text-align:left;">
 X93080P
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 3344
@@ -3502,10 +3907,16 @@ NA
 P
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3514,6 +3925,9 @@ Garland, Lenah
 </td>
 <td style="text-align:left;">
 E758891B
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 8275
@@ -3577,7 +3991,13 @@ P
 North
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3586,6 +4006,9 @@ al-Burki, Dhaki
 </td>
 <td style="text-align:left;">
 L978826F
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:left;">
 4289
@@ -3649,7 +4072,13 @@ P
 East
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+NA
 </td>
 </tr>
 <tr>
@@ -3658,6 +4087,9 @@ Riddick, Alexander
 </td>
 <td style="text-align:left;">
 Y141885L
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 8807
@@ -3720,7 +4152,13 @@ N
 North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -3729,6 +4167,9 @@ Quach, Kanchana
 </td>
 <td style="text-align:left;">
 L762764J
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 6552
@@ -3795,6 +4236,12 @@ South
 <td style="text-align:left;">
 3C4D
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3802,6 +4249,9 @@ Edwards, Jordan
 </td>
 <td style="text-align:left;">
 L822113R
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 3309
@@ -3866,6 +4316,12 @@ South
 <td style="text-align:left;">
 5E6F
 </td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -3873,6 +4329,9 @@ Le, Cordelia
 </td>
 <td style="text-align:left;">
 W169026C
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 3478
@@ -3935,7 +4394,13 @@ N
 East
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -3944,6 +4409,9 @@ Corning, Roget
 </td>
 <td style="text-align:left;">
 F169524C
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 </td>
@@ -4006,7 +4474,13 @@ N
 East
 </td>
 <td style="text-align:left;">
-1A2B
+3C4D
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4015,6 +4489,9 @@ Lewis, Sachae
 </td>
 <td style="text-align:left;">
 F833563K
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -4080,6 +4557,12 @@ East
 <td style="text-align:left;">
 8G9H
 </td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -4087,6 +4570,9 @@ Casalaina, Taylor
 </td>
 <td style="text-align:left;">
 N747000P
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 </td>
@@ -4149,7 +4635,13 @@ O
 South
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4158,6 +4650,9 @@ Wisham, Hannah
 </td>
 <td style="text-align:left;">
 E829622B
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -4222,7 +4717,13 @@ P
 East
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4231,6 +4732,9 @@ Sandoval Romero, Cesar
 </td>
 <td style="text-align:left;">
 B122528U
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 P
@@ -4291,7 +4795,13 @@ P
 East
 </td>
 <td style="text-align:left;">
-1A2B
+3C4D
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4300,6 +4810,9 @@ Mo, Tyler
 </td>
 <td style="text-align:left;">
 B409818K
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 N
@@ -4364,7 +4877,13 @@ P
 South
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4373,6 +4892,9 @@ Renfroe, Noah
 </td>
 <td style="text-align:left;">
 W545437Y
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 P
@@ -4434,10 +4956,16 @@ O
 P
 </td>
 <td style="text-align:left;">
-North
+NA
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4446,6 +4974,9 @@ Lewis III, Rajon
 </td>
 <td style="text-align:left;">
 A755450T
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -4503,10 +5034,16 @@ P
 <td style="text-align:left;">
 </td>
 <td style="text-align:left;">
-East
+South
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4515,6 +5052,9 @@ Johnson, Daijanae
 </td>
 <td style="text-align:left;">
 H641867H
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -4573,10 +5113,16 @@ P
 O
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 <tr>
@@ -4585,6 +5131,9 @@ Lindsey, Don
 </td>
 <td style="text-align:left;">
 K850252Q
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 S
@@ -4647,6 +5196,12 @@ West
 <td style="text-align:left;">
 1A2B
 </td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -4654,6 +5209,9 @@ Iu, Aaron
 </td>
 <td style="text-align:left;">
 P930968J
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:left;">
 O
@@ -4714,6 +5272,12 @@ East
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+1
 </td>
 </tr>
 </tbody>
@@ -4723,7 +5287,7 @@ East
 <p>Now, we would want to convert these digit strings into numeric columns.</p>
 <pre class="r"><code># Dot . inherits the object after the pipe. i.e. individual column
 # Wrap the result from lead_zer0_trim(.) with as.numeric and turn the process into a temp function by funs()
-test &lt;- df %&gt;% mutate_at(vars(matches(&quot;^(attr_|ada_|ix_)&quot;)),funs(as.numeric(lead_zero_trim(.))))
+test &lt;- df %&gt;% mutate_at(vars(matches(&quot;^(attr_|ada_|ix_|result)&quot;)),funs(as.numeric(lead_zero_trim(.))))
 
 # See how df looks like now
 knitr::kable(test) %&gt;% kable_styling() %&gt;% scroll_box(width = &quot;100%&quot;, height = &quot;600px&quot;)</code></pre>
@@ -4736,6 +5300,9 @@ name
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 id
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+base_column
 </th>
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_1
@@ -4803,6 +5370,12 @@ ix_1
 <th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ix_2
 </th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind_2
+</th>
 </tr>
 </thead>
 <tbody>
@@ -4812,6 +5385,9 @@ Her, Abhinav
 </td>
 <td style="text-align:left;">
 J959807F
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 3371
@@ -4879,6 +5455,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -4886,6 +5468,9 @@ Dews, Shayna
 </td>
 <td style="text-align:left;">
 G234300N
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 5610
@@ -4953,6 +5538,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -4960,6 +5551,9 @@ Kiefer, Tasia
 </td>
 <td style="text-align:left;">
 B803488K
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 2973
@@ -5027,6 +5621,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5034,6 +5634,9 @@ Watchman, Andrew
 </td>
 <td style="text-align:left;">
 O787540P
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 9621
@@ -5101,6 +5704,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5108,6 +5717,9 @@ Massara, Abigail
 </td>
 <td style="text-align:left;">
 T486795I
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 8575
@@ -5175,6 +5787,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5182,6 +5800,9 @@ Tran, Thomas
 </td>
 <td style="text-align:left;">
 E410468Z
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 3963
@@ -5249,6 +5870,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5256,6 +5883,9 @@ al-Waheed, Rumaana
 </td>
 <td style="text-align:left;">
 Y655483R
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 4906
@@ -5323,6 +5953,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5330,6 +5966,9 @@ Bailey, Corie
 </td>
 <td style="text-align:left;">
 C510608T
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 26
@@ -5397,6 +6036,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5404,6 +6049,9 @@ Mata-Lovato, Alexi
 </td>
 <td style="text-align:left;">
 D749327B
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 117
@@ -5471,6 +6119,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5478,6 +6132,9 @@ al-Farrah, Jam,Aan
 </td>
 <td style="text-align:left;">
 W704185D
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 9081
@@ -5545,6 +6202,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5552,6 +6215,9 @@ Madrill, Arnulfo
 </td>
 <td style="text-align:left;">
 R102458G
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 4502
@@ -5619,6 +6285,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5626,6 +6298,9 @@ Schmalz, Alyssa
 </td>
 <td style="text-align:left;">
 C305005Z
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 3565
@@ -5693,6 +6368,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5700,6 +6381,9 @@ Hickam, Judson
 </td>
 <td style="text-align:left;">
 X93080P
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 3344
@@ -5767,6 +6451,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5774,6 +6464,9 @@ Garland, Lenah
 </td>
 <td style="text-align:left;">
 E758891B
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 8275
@@ -5841,6 +6534,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5848,6 +6547,9 @@ al-Burki, Dhaki
 </td>
 <td style="text-align:left;">
 L978826F
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 4289
@@ -5915,6 +6617,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5922,6 +6630,9 @@ Riddick, Alexander
 </td>
 <td style="text-align:left;">
 Y141885L
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 8807
@@ -5989,6 +6700,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5996,6 +6713,9 @@ Quach, Kanchana
 </td>
 <td style="text-align:left;">
 L762764J
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 6552
@@ -6063,6 +6783,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6070,6 +6796,9 @@ Edwards, Jordan
 </td>
 <td style="text-align:left;">
 L822113R
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 3309
@@ -6137,6 +6866,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6144,6 +6879,9 @@ Le, Cordelia
 </td>
 <td style="text-align:left;">
 W169026C
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 3478
@@ -6211,6 +6949,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6218,6 +6962,9 @@ Corning, Roget
 </td>
 <td style="text-align:left;">
 F169524C
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6285,6 +7032,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6292,6 +7045,9 @@ Lewis, Sachae
 </td>
 <td style="text-align:left;">
 F833563K
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6359,6 +7115,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6366,6 +7128,9 @@ Casalaina, Taylor
 </td>
 <td style="text-align:left;">
 N747000P
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6433,6 +7198,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6440,6 +7211,9 @@ Wisham, Hannah
 </td>
 <td style="text-align:left;">
 E829622B
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6507,6 +7281,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6514,6 +7294,9 @@ Sandoval Romero, Cesar
 </td>
 <td style="text-align:left;">
 B122528U
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6581,6 +7364,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6588,6 +7377,9 @@ Mo, Tyler
 </td>
 <td style="text-align:left;">
 B409818K
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6655,6 +7447,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6662,6 +7460,9 @@ Renfroe, Noah
 </td>
 <td style="text-align:left;">
 W545437Y
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6729,6 +7530,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6736,6 +7543,9 @@ Lewis III, Rajon
 </td>
 <td style="text-align:left;">
 A755450T
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6803,6 +7613,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6810,6 +7626,9 @@ Johnson, Daijanae
 </td>
 <td style="text-align:left;">
 H641867H
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6877,6 +7696,12 @@ NA
 <td style="text-align:right;">
 NA
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -6884,6 +7709,9 @@ Lindsey, Don
 </td>
 <td style="text-align:left;">
 K850252Q
+</td>
+<td style="text-align:right;">
+NA
 </td>
 <td style="text-align:right;">
 NA
@@ -6950,6 +7778,12 @@ NA
 </td>
 <td style="text-align:right;">
 NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -7024,6 +7858,15 @@ NA
 </td>
 <td style="text-align:right;">
 NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 </tbody>
@@ -7056,10 +7899,10 @@ ig_wrangle &lt;- function(x){
                  TRUE ~ x)
   
   # Convert to numeric if there is at least one proper number data in that column
-  if(any(is.proper.number(x))){
-    as.numeric(x)
+  if(any(is.proper.number(x), na.rm = TRUE)){
+    x &lt;- as.numeric(x)
   } else {
-    x
+    x &lt;- x
   }
   
   return(x)
@@ -7079,64 +7922,67 @@ name
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 id
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+base_column
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_1
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_2
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_3
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_4
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_5
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_6
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_7
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_8
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_9
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 attr_10
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_1
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_2
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_3
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_4
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_5
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_6
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_7
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_8
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_9
 </th>
-<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
 ada_10
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
@@ -7144,6 +7990,12 @@ ix_1
 </th>
 <th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
 ix_2
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+result_ind_2
 </th>
 </tr>
 </thead>
@@ -7155,71 +8007,80 @@ Her, Abhinav
 <td style="text-align:left;">
 J959807F
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 3371
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3613
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6093
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3411
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2180
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7845
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6874
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8435
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1467
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5090
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3554
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7767
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2779
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6235
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7309
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7685
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9916
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6296
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9787
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6766
 </td>
 <td style="text-align:left;">
 North
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7229,64 +8090,67 @@ Dews, Shayna
 <td style="text-align:left;">
 G234300N
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 5610
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3265
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6756
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6307
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8466
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2395
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 285
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4480
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6644
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9457
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8418
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8782
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5735
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6464
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5551
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5849
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7345
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4872
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9102
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5902
 </td>
 <td style="text-align:left;">
@@ -7294,6 +8158,12 @@ West
 </td>
 <td style="text-align:left;">
 5E6F
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7303,71 +8173,80 @@ Kiefer, Tasia
 <td style="text-align:left;">
 B803488K
 </td>
-<td style="text-align:left;">
-2973
-</td>
-<td style="text-align:left;">
-9999
-</td>
-<td style="text-align:left;">
-2878
-</td>
-<td style="text-align:left;">
-7659
-</td>
-<td style="text-align:left;">
-2812
-</td>
-<td style="text-align:left;">
-3928
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+2973
+</td>
+<td style="text-align:right;">
+9999
+</td>
+<td style="text-align:right;">
+2878
+</td>
+<td style="text-align:right;">
+7659
+</td>
+<td style="text-align:right;">
+2812
+</td>
+<td style="text-align:right;">
+3928
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 7907
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3931
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1124
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7705
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2425
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 464
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8656
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6109
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3763
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8821
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
 <td style="text-align:left;">
 East
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7377,71 +8256,80 @@ Watchman, Andrew
 <td style="text-align:left;">
 O787540P
 </td>
-<td style="text-align:left;">
-9621
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+9621
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 1979
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9455
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3813
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6375
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 686
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2134
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7035
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9627
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 560
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6997
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3332
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8448
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 638
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4018
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
 <td style="text-align:left;">
-South
+West
 </td>
 <td style="text-align:left;">
 1A2B
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7451,64 +8339,67 @@ Massara, Abigail
 <td style="text-align:left;">
 T486795I
 </td>
-<td style="text-align:left;">
-8575
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-5560
-</td>
-<td style="text-align:left;">
-4280
-</td>
-<td style="text-align:left;">
-9219
-</td>
-<td style="text-align:left;">
-1598
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+8575
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+5560
+</td>
+<td style="text-align:right;">
+4280
+</td>
+<td style="text-align:right;">
+9219
+</td>
+<td style="text-align:right;">
+1598
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 1970
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3871
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1056
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9648
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 722
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6797
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5078
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4767
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9904
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5505
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
 <td style="text-align:left;">
@@ -7516,6 +8407,12 @@ South
 </td>
 <td style="text-align:left;">
 5E6F
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7525,64 +8422,67 @@ Tran, Thomas
 <td style="text-align:left;">
 E410468Z
 </td>
-<td style="text-align:left;">
-3963
-</td>
-<td style="text-align:left;">
-999
-</td>
-<td style="text-align:left;">
-5599
-</td>
-<td style="text-align:left;">
-6215
-</td>
-<td style="text-align:left;">
-2304
-</td>
-<td style="text-align:left;">
-5753
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-462
-</td>
-<td style="text-align:left;">
-1652
-</td>
-<td style="text-align:left;">
-5469
-</td>
-<td style="text-align:left;">
-2389
-</td>
-<td style="text-align:left;">
-502
-</td>
-<td style="text-align:left;">
-6301
-</td>
-<td style="text-align:left;">
-4732
-</td>
-<td style="text-align:left;">
-5718
-</td>
-<td style="text-align:left;">
-6752
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+3963
+</td>
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+5599
+</td>
+<td style="text-align:right;">
+6215
+</td>
+<td style="text-align:right;">
+2304
+</td>
+<td style="text-align:right;">
+5753
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+462
+</td>
+<td style="text-align:right;">
+1652
+</td>
+<td style="text-align:right;">
+5469
+</td>
+<td style="text-align:right;">
+2389
+</td>
+<td style="text-align:right;">
+502
+</td>
+<td style="text-align:right;">
+6301
+</td>
+<td style="text-align:right;">
+4732
+</td>
+<td style="text-align:right;">
+5718
+</td>
+<td style="text-align:right;">
+6752
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+999
+</td>
+<td style="text-align:right;">
 346
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -7590,6 +8490,12 @@ East
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7599,71 +8505,80 @@ al-Waheed, Rumaana
 <td style="text-align:left;">
 Y655483R
 </td>
-<td style="text-align:left;">
-4906
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+4906
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 1123
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2767
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6481
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 635
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 432
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5707
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4158
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2906
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3909
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1348
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4057
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1828
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5003
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3928
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
 South
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7673,71 +8588,80 @@ Bailey, Corie
 <td style="text-align:left;">
 C510608T
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 26
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6947
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7788
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2508
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5837
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2565
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1710
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9759
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3227
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 273
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4359
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2107
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5865
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3835
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
-North
+NA
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7747,71 +8671,80 @@ Mata-Lovato, Alexi
 <td style="text-align:left;">
 D749327B
 </td>
-<td style="text-align:left;">
-117
-</td>
-<td style="text-align:left;">
-9999
-</td>
-<td style="text-align:left;">
-4626
-</td>
-<td style="text-align:left;">
-3618
-</td>
-<td style="text-align:left;">
-5087
-</td>
-<td style="text-align:left;">
-3105
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+117
+</td>
+<td style="text-align:right;">
+9999
+</td>
+<td style="text-align:right;">
+4626
+</td>
+<td style="text-align:right;">
+3618
+</td>
+<td style="text-align:right;">
+5087
+</td>
+<td style="text-align:right;">
+3105
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 3599
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5728
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1522
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7715
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5157
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8652
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3860
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9515
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2159
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7821,71 +8754,80 @@ al-Farrah, Jam,Aan
 <td style="text-align:left;">
 W704185D
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 9081
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3943
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7263
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9296
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4174
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8355
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1680
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 111
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5638
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3674
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4643
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1581
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6288
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
 5E6F
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7895,71 +8837,80 @@ Madrill, Arnulfo
 <td style="text-align:left;">
 R102458G
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 4502
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4634
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5529
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9561
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3118
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2498
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2800
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9035
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3508
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5438
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6398
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
 East
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -7969,64 +8920,67 @@ Schmalz, Alyssa
 <td style="text-align:left;">
 C305005Z
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 3565
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8802
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9178
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3406
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 109
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3986
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2916
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5394
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7192
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8915
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
 <td style="text-align:left;">
@@ -8034,6 +8988,12 @@ South
 </td>
 <td style="text-align:left;">
 1A2B
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -8043,71 +9003,80 @@ Hickam, Judson
 <td style="text-align:left;">
 X93080P
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 3344
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 854
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4223
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2952
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4623
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3724
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8056
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7007
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1985
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
-West
+North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -8117,71 +9086,80 @@ Garland, Lenah
 <td style="text-align:left;">
 E758891B
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 8275
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5183
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9736
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5371
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5294
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1161
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4520
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4124
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
 North
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -8191,71 +9169,80 @@ al-Burki, Dhaki
 <td style="text-align:left;">
 L978826F
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 4289
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3696
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2132
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1980
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9282
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2883
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5529
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3910
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
 East
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+NA
 </td>
 </tr>
 <tr>
@@ -8265,71 +9252,80 @@ Riddick, Alexander
 <td style="text-align:left;">
 Y141885L
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 8807
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1984
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 217
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9293
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1245
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4594
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1629
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9571
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
 <td style="text-align:left;">
 North
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8339,64 +9335,67 @@ Quach, Kanchana
 <td style="text-align:left;">
 L762764J
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 6552
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5768
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2915
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3118
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5622
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1518
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2779
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
 <td style="text-align:left;">
@@ -8404,6 +9403,12 @@ South
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8413,64 +9418,67 @@ Edwards, Jordan
 <td style="text-align:left;">
 L822113R
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 3309
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1606
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8578
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7335
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4720
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 28
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 692
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
 <td style="text-align:left;">
@@ -8478,6 +9486,12 @@ South
 </td>
 <td style="text-align:left;">
 5E6F
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8487,71 +9501,80 @@ Le, Cordelia
 <td style="text-align:left;">
 W169026C
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 3478
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4319
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5988
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4487
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5045
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2966
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1053
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
 <td style="text-align:left;">
 East
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8561,71 +9584,80 @@ Corning, Roget
 <td style="text-align:left;">
 F169524C
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8610
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9951
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2098
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4050
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8032
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8823
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
 <td style="text-align:left;">
 East
 </td>
 <td style="text-align:left;">
-1A2B
+3C4D
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8635,64 +9667,67 @@ Lewis, Sachae
 <td style="text-align:left;">
 F833563K
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 886
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 4542
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3991
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6326
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1337
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
@@ -8700,6 +9735,12 @@ East
 </td>
 <td style="text-align:left;">
 8G9H
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8709,71 +9750,80 @@ Casalaina, Taylor
 <td style="text-align:left;">
 N747000P
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2128
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9970
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 373
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9098
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
 <td style="text-align:left;">
 South
 </td>
 <td style="text-align:left;">
-5E6F
+8G9H
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8783,71 +9833,80 @@ Wisham, Hannah
 <td style="text-align:left;">
 E829622B
 </td>
-<td style="text-align:left;">
-99
-</td>
-<td style="text-align:left;">
-9999
-</td>
-<td style="text-align:left;">
-99
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+9999
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 4089
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6478
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 6813
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
 East
 </td>
 <td style="text-align:left;">
-8G9H
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8857,71 +9916,80 @@ Sandoval Romero, Cesar
 <td style="text-align:left;">
 B122528U
 </td>
-<td style="text-align:left;">
-999
-</td>
-<td style="text-align:left;">
-9999
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+999
+</td>
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+9999
+</td>
+<td style="text-align:right;">
 4250
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 8100
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7545
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
 East
 </td>
 <td style="text-align:left;">
-1A2B
+3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -8931,71 +9999,80 @@ Mo, Tyler
 <td style="text-align:left;">
 B409818K
 </td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-999
-</td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+999
+</td>
+<td style="text-align:right;">
 8595
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 5051
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7380
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
 South
 </td>
 <td style="text-align:left;">
-3C4D
+5E6F
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -9005,71 +10082,80 @@ Renfroe, Noah
 <td style="text-align:left;">
 W545437Y
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3979
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9035
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+999
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
 999
 </td>
 <td style="text-align:left;">
 NA
 </td>
 <td style="text-align:left;">
+8G9H
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 1
-</td>
-<td style="text-align:left;">
-99
-</td>
-<td style="text-align:left;">
-999
-</td>
-<td style="text-align:left;">
-North
-</td>
-<td style="text-align:left;">
-5E6F
 </td>
 </tr>
 <tr>
@@ -9079,71 +10165,80 @@ Lewis III, Rajon
 <td style="text-align:left;">
 A755450T
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 3890
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
-East
+South
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -9153,71 +10248,80 @@ Johnson, Daijanae
 <td style="text-align:left;">
 H641867H
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 7619
 </td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+999
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:left;">
+North
+</td>
 <td style="text-align:left;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 1
-</td>
-<td style="text-align:left;">
-99
-</td>
-<td style="text-align:left;">
-999
-</td>
-<td style="text-align:left;">
-99
-</td>
-<td style="text-align:left;">
-West
-</td>
-<td style="text-align:left;">
-8G9H
 </td>
 </tr>
 <tr>
@@ -9227,64 +10331,67 @@ Lindsey, Don
 <td style="text-align:left;">
 K850252Q
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 2114
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -9292,6 +10399,12 @@ West
 </td>
 <td style="text-align:left;">
 1A2B
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 <tr>
@@ -9301,64 +10414,67 @@ Iu, Aaron
 <td style="text-align:left;">
 P930968J
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 1
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 9999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 999
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 99
 </td>
-<td style="text-align:left;">
+<td style="text-align:right;">
 NA
 </td>
 <td style="text-align:left;">
@@ -9366,6 +10482,12 @@ East
 </td>
 <td style="text-align:left;">
 3C4D
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 </tbody>
@@ -9407,10 +10529,10 @@ ig_wrangle &lt;- function(x){
                  TRUE ~ x)
   
   # Convert to numeric if there is at least one proper number data in that column
-  if(any(is.proper.number(x))){
-    as.numeric(x)
+  if(any(is.proper.number(x), na.rm = TRUE)){
+    x &lt;- as.numeric(x)
   } else {
-    x
+    x &lt;- x
   }
   
   return(x)
@@ -9424,8 +10546,27 @@ ig_df_wrangle &lt;- function(df, start_with_str){
 }
 
 # Test
-test2 &lt;- ig_df_wrangle(df, &quot;attr_|ada_|ix_&quot;)
-# This will apply the ig_wrangle function to columns that starts with attr_, ada_ or ix_</code></pre>
+test2 &lt;- ig_df_wrangle(df, &quot;attr_|ix_&quot;)
+# This will apply the ig_wrangle function to columns that starts with attr_, ada_ or ix_
+
+test2_sum &lt;- lapply(test2, function(x){
+  if(is.numeric(x)){
+    correlation = tryCatch({cor(x, test$result_ind, use = &quot;complete.obs&quot;)}, error = function(e){-9999})
+    average = mean(x, na.rm = TRUE)
+  } else {
+    correlation = NA
+    average = NA
+  }
+  
+  return(c(correlation = correlation, average = average))
+  
+})</code></pre>
+<pre><code>## Warning in cor(x, test$result_ind, use = &quot;complete.obs&quot;): the standard
+## deviation is zero
+
+## Warning in cor(x, test$result_ind, use = &quot;complete.obs&quot;): the standard
+## deviation is zero</code></pre>
+<pre class="r"><code>test2_sum &lt;- t(as.data.frame(test2_sum))</code></pre>
 </div>
 
 
