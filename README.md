@@ -3,3 +3,5 @@ The repository keeps tracks of the code snippets and custom functions that I use
 
 ## trailing zeros.R
 Can remove leading and trailing zeros of non alpah-character column and convert to numeric
+
+test
